@@ -42,6 +42,8 @@ from keras_cv.models.stable_diffusion.image_encoder import ImageEncoder
 from keras_cv.models.stable_diffusion.text_encoder import TextEncoder
 from keras_cv.models.stable_diffusion.text_encoder import TextEncoderV2
 
+from PIL import Image
+
 MAX_PROMPT_LENGTH = 77
 
 
@@ -87,6 +89,39 @@ class StableDiffusionBase:
             num_steps=num_steps,
             unconditional_guidance_scale=unconditional_guidance_scale,
             seed=seed,
+        )
+
+    def image_to_image(
+        self,
+        prompt="",
+        negative_prompt=None,
+        batch_size=1,
+        num_steps=50,
+        unconditional_guidance_scale=7.5,
+        input_image="",
+    ):
+        if input_image is "":
+            raise ValueError(
+                "`input_image` is required to generate diffusion noise"
+                "and be passed to `generate_image`."
+            )
+
+        if prompt is "":
+            raise ValueError(
+                "`prompt` is required to generate encodedtext"
+                "and be passed to `generate_image`."
+            )
+
+        encoded_text = self.encode_text(prompt)
+        diffusion_noise=self._get_image_diffusion_noise(input_image=input_image)
+
+        return self.generate_image(
+            encoded_text,
+            negative_prompt=negative_prompt,
+            batch_size=batch_size,
+            num_steps=num_steps,
+            unconditional_guidance_scale=unconditional_guidance_scale,
+            diffusion_noise=diffusion_noise,
         )
 
     def encode_text(self, prompt):
@@ -343,6 +378,19 @@ class StableDiffusionBase:
             (batch_size, self.img_height // 8, self.img_width // 8, 4),
             seed=seed,
         )
+
+    def _get_image_diffusion_noise(self, input_image=""):
+        input_image = Image.open(input_image)
+        if input_image is None:
+            raise ValueError(
+                "`input_image` is used to generate diffusion noise"
+                "and be passed to `generate_image`."
+            )
+        input_image = input_image.resize((self.img_width, self.img_height))
+        input_image_array = np.array(input_image, dtype=np.float32)[None,...,:3]
+
+        input_image_tensor = ops.cast((input_image_array / 255.0) * 2 - 1, dtype = self.dtype)
+        return input_image_tensor
 
     @staticmethod
     def _get_pos_ids():

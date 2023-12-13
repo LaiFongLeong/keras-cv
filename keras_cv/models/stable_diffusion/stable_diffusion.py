@@ -386,7 +386,7 @@ class StableDiffusionBase:
                 "`input_image` is used to generate diffusion noise"
                 "and be passed to `generate_image`."
             )
-        input_image = input_image.resize((self.img_width, self.img_height))
+        input_image = input_image.resize((self.img_width // 8, self.img_height // 8))
         input_image_array = np.array(input_image, dtype=np.float32)[None,...,:3]
 
         input_image_tensor = ops.cast((input_image_array / 255.0) * 2 - 1, dtype="float32")

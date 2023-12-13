@@ -390,7 +390,7 @@ class StableDiffusionBase:
         input_image.putalpha(255)
 
         input_image_array = np.array(input_image, dtype=np.float32)
-        input_image_tensor = ops.cast((input_image_array / 255.0) * 2 - 1, dtype="float32")
+        input_image_tensor = ops.cast((input_image_array / 255.0), dtype="float32")
         return input_image_tensor
 
     @staticmethod
